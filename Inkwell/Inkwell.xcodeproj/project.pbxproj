@@ -1,0 +1,453 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		72CCBB261D520A6F36533216 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 726FD59F11F796D4525ED3B4 /* ContentView.swift */; };
+		C47D4493D542A2DFD6100A1A /* InkwellApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B9433322F038C428C309A3 /* InkwellApp.swift */; };
+		77BDF6A90011D8E84FEB666C /* Folder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB916FAA22F24423025DAA23 /* Folder.swift */; };
+		6A3E25D5E0E762D7E684A6F1 /* Notebook.swift in Sources */ = {isa = PBXBuildFile; fileRef = F455450F25A8BBD65ABEF99C /* Notebook.swift */; };
+		8185B2C4F2F4D07820ECDB92 /* Page.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12828F30F00F3A9C05AFF7AB /* Page.swift */; };
+		150F54B9D9551D2F3E76DF31 /* PageTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C7B3A3EDC5609E3E5E804B /* PageTemplate.swift */; };
+		CEDFB13BBC2C4331B6709D02 /* TextBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3086BECBE5C4295743392856 /* TextBox.swift */; };
+		7BCBCB42E96AB4E071C9354B /* ClaudeAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B25EDBA8895EFB974B28B7C /* ClaudeAPIService.swift */; };
+		DBB3167085E436326A8BEC9B /* HandwritingRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C2C2B51F8D3AC69B21E9AC /* HandwritingRecognizer.swift */; };
+		6FA151248A1146A58C6A6505 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC38CF75BC779847F179F511 /* KeychainHelper.swift */; };
+		E398AA210C82FC3CB5FCF1A4 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 011970D856D0195D4D9F3F60 /* ColorPalette.swift */; };
+		79DCD167E390E672BBBDF854 /* AIAssistantSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648A1B21D14F8E980B9796F9 /* AIAssistantSheet.swift */; };
+		962DC6F0A4379D686C1E4956 /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D48682CC1B2BBEF1BCECAA6 /* CanvasView.swift */; };
+		631AE5D24F7AE982B3EFC556 /* NotebookGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1CAF7E8B2ECFFEDCED3A4D /* NotebookGridView.swift */; };
+		121708A7E95C445332153D3D /* PageEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AF136743061B8B3905222C /* PageEditorView.swift */; };
+		1900179B9D658F57B8F4454C /* PageThumbnailStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1565C045CB1F824CCF7625 /* PageThumbnailStrip.swift */; };
+		4467619BEF4D9CA91C309768 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153B15113519CE9C00BE7139 /* SettingsView.swift */; };
+		766FC1A17AFF84846D76B7AF /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28D4C6AADFB5B6D86231A96A /* SidebarView.swift */; };
+		05E5E239A403B6C3FB68A3FE /* TemplatePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6AFD44F41874849CF11CA0E /* TemplatePickerView.swift */; };
+		0CCB26F7057DF25C3C93ACB2 /* TextBoxLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A29DFAE620904EFB149E73 /* TextBoxLayerView.swift */; };
+		014565F72752FEA7217252FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3FA677E69B4314A70F03BE6 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		726FD59F11F796D4525ED3B4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B8B9433322F038C428C309A3 /* InkwellApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InkwellApp.swift; sourceTree = "<group>"; };
+		BB916FAA22F24423025DAA23 /* Folder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Folder.swift; sourceTree = "<group>"; };
+		F455450F25A8BBD65ABEF99C /* Notebook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notebook.swift; sourceTree = "<group>"; };
+		12828F30F00F3A9C05AFF7AB /* Page.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Page.swift; sourceTree = "<group>"; };
+		E7C7B3A3EDC5609E3E5E804B /* PageTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageTemplate.swift; sourceTree = "<group>"; };
+		3086BECBE5C4295743392856 /* TextBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextBox.swift; sourceTree = "<group>"; };
+		4B25EDBA8895EFB974B28B7C /* ClaudeAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAPIService.swift; sourceTree = "<group>"; };
+		43C2C2B51F8D3AC69B21E9AC /* HandwritingRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingRecognizer.swift; sourceTree = "<group>"; };
+		EC38CF75BC779847F179F511 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		011970D856D0195D4D9F3F60 /* ColorPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
+		648A1B21D14F8E980B9796F9 /* AIAssistantSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantSheet.swift; sourceTree = "<group>"; };
+		2D48682CC1B2BBEF1BCECAA6 /* CanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasView.swift; sourceTree = "<group>"; };
+		4E1CAF7E8B2ECFFEDCED3A4D /* NotebookGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotebookGridView.swift; sourceTree = "<group>"; };
+		01AF136743061B8B3905222C /* PageEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageEditorView.swift; sourceTree = "<group>"; };
+		EF1565C045CB1F824CCF7625 /* PageThumbnailStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageThumbnailStrip.swift; sourceTree = "<group>"; };
+		153B15113519CE9C00BE7139 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		28D4C6AADFB5B6D86231A96A /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		B6AFD44F41874849CF11CA0E /* TemplatePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePickerView.swift; sourceTree = "<group>"; };
+		B5A29DFAE620904EFB149E73 /* TextBoxLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextBoxLayerView.swift; sourceTree = "<group>"; };
+		C3FA677E69B4314A70F03BE6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A025F7735986E93EB0D45770 /* Inkwell.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Inkwell.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		39CDF2EC5D30188F656636A3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		38351591E7E94E0B3B083BCD /* Inkwell */ = {
+			isa = PBXGroup;
+			children = (
+				726FD59F11F796D4525ED3B4 /* ContentView.swift */,
+				B8B9433322F038C428C309A3 /* InkwellApp.swift */,
+				F6C2E400E0C3F152B0E34BF1 /* Models */,
+				1FCA61D03D7E1320F413E814 /* Services */,
+				0B05645CA587EA1159EDD642 /* Support */,
+				FD1CA423032016C082547639 /* Views */,
+				C3FA677E69B4314A70F03BE6 /* Assets.xcassets */,
+			);
+			path = Inkwell;
+			sourceTree = "<group>";
+		};
+		F6C2E400E0C3F152B0E34BF1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BB916FAA22F24423025DAA23 /* Folder.swift */,
+				F455450F25A8BBD65ABEF99C /* Notebook.swift */,
+				12828F30F00F3A9C05AFF7AB /* Page.swift */,
+				E7C7B3A3EDC5609E3E5E804B /* PageTemplate.swift */,
+				3086BECBE5C4295743392856 /* TextBox.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		1FCA61D03D7E1320F413E814 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				4B25EDBA8895EFB974B28B7C /* ClaudeAPIService.swift */,
+				43C2C2B51F8D3AC69B21E9AC /* HandwritingRecognizer.swift */,
+				EC38CF75BC779847F179F511 /* KeychainHelper.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		0B05645CA587EA1159EDD642 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				011970D856D0195D4D9F3F60 /* ColorPalette.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		FD1CA423032016C082547639 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				648A1B21D14F8E980B9796F9 /* AIAssistantSheet.swift */,
+				2D48682CC1B2BBEF1BCECAA6 /* CanvasView.swift */,
+				4E1CAF7E8B2ECFFEDCED3A4D /* NotebookGridView.swift */,
+				01AF136743061B8B3905222C /* PageEditorView.swift */,
+				EF1565C045CB1F824CCF7625 /* PageThumbnailStrip.swift */,
+				153B15113519CE9C00BE7139 /* SettingsView.swift */,
+				28D4C6AADFB5B6D86231A96A /* SidebarView.swift */,
+				B6AFD44F41874849CF11CA0E /* TemplatePickerView.swift */,
+				B5A29DFAE620904EFB149E73 /* TextBoxLayerView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E3C24BD7F0DF90507EF590D8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A025F7735986E93EB0D45770 /* Inkwell.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3817839349BFEB585D57EDBF = {
+			isa = PBXGroup;
+			children = (
+				38351591E7E94E0B3B083BCD /* Inkwell */,
+				E3C24BD7F0DF90507EF590D8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D84F7E6AF6211683043F3AF6 /* Inkwell */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5AC03D1E32F6029125445248 /* Build configuration list for PBXNativeTarget "Inkwell" */;
+			buildPhases = (
+				96B07DCDD4B5418013AB3DAF /* Sources */,
+				39CDF2EC5D30188F656636A3 /* Frameworks */,
+				958619AF8CDE12C420BF5810 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Inkwell;
+			productName = Inkwell;
+			productReference = A025F7735986E93EB0D45770 /* Inkwell.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F1294643C253163241CF73EF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					D84F7E6AF6211683043F3AF6 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = B2897441D53BC6DE252AD727 /* Build configuration list for PBXProject "Inkwell" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 3817839349BFEB585D57EDBF;
+			productRefGroup = E3C24BD7F0DF90507EF590D8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D84F7E6AF6211683043F3AF6 /* Inkwell */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		958619AF8CDE12C420BF5810 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				014565F72752FEA7217252FB /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		96B07DCDD4B5418013AB3DAF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				72CCBB261D520A6F36533216 /* ContentView.swift in Sources */,
+				C47D4493D542A2DFD6100A1A /* InkwellApp.swift in Sources */,
+				77BDF6A90011D8E84FEB666C /* Folder.swift in Sources */,
+				6A3E25D5E0E762D7E684A6F1 /* Notebook.swift in Sources */,
+				8185B2C4F2F4D07820ECDB92 /* Page.swift in Sources */,
+				150F54B9D9551D2F3E76DF31 /* PageTemplate.swift in Sources */,
+				CEDFB13BBC2C4331B6709D02 /* TextBox.swift in Sources */,
+				7BCBCB42E96AB4E071C9354B /* ClaudeAPIService.swift in Sources */,
+				DBB3167085E436326A8BEC9B /* HandwritingRecognizer.swift in Sources */,
+				6FA151248A1146A58C6A6505 /* KeychainHelper.swift in Sources */,
+				E398AA210C82FC3CB5FCF1A4 /* ColorPalette.swift in Sources */,
+				79DCD167E390E672BBBDF854 /* AIAssistantSheet.swift in Sources */,
+				962DC6F0A4379D686C1E4956 /* CanvasView.swift in Sources */,
+				631AE5D24F7AE982B3EFC556 /* NotebookGridView.swift in Sources */,
+				121708A7E95C445332153D3D /* PageEditorView.swift in Sources */,
+				1900179B9D658F57B8F4454C /* PageThumbnailStrip.swift in Sources */,
+				4467619BEF4D9CA91C309768 /* SettingsView.swift in Sources */,
+				766FC1A17AFF84846D76B7AF /* SidebarView.swift in Sources */,
+				05E5E239A403B6C3FB68A3FE /* TemplatePickerView.swift in Sources */,
+				0CCB26F7057DF25C3C93ACB2 /* TextBoxLayerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		6FC5152634139A0213F3D1AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+
+		};
+		8499944E2A77BFE662ECBC1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+
+		};
+		84FC4D6538EEFAFA2FF3D80E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = NO;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.inkwell.notesapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+
+		};
+		7A837A060CEECADE5CD0FDEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = NO;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.inkwell.notesapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B2897441D53BC6DE252AD727 /* Build configuration list for PBXProject "Inkwell" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6FC5152634139A0213F3D1AE /* Debug */,
+				8499944E2A77BFE662ECBC1B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5AC03D1E32F6029125445248 /* Build configuration list for PBXNativeTarget "Inkwell" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84FC4D6538EEFAFA2FF3D80E /* Debug */,
+				7A837A060CEECADE5CD0FDEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F1294643C253163241CF73EF /* Project object */;
+}
