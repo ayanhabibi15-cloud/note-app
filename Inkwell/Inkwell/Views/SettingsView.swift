@@ -18,7 +18,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Claude AI Assistant") {
+                Section {
                     SecureField("Anthropic API key", text: $apiKey)
                         .textContentType(.password)
                         .autocorrectionDisabled()
@@ -48,6 +48,8 @@ struct SettingsView: View {
                     Text("Your API key is stored only in this device's Keychain. It's sent directly to Anthropic when you use the AI assistant — never anywhere else.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } header: {
+                    Text("Claude AI Assistant")
                 } footer: {
                     if savedConfirmation {
                         Text("Saved.")
