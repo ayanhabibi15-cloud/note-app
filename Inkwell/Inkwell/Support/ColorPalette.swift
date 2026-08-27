@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Named colors used for folder tags and notebook covers. Stored on models as
 /// plain strings so SwiftData never has to persist a `Color` directly.

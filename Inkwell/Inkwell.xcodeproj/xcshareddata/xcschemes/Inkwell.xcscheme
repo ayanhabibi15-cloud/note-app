@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D84F7E6AF6211683043F3AF6"
+               BlueprintIdentifier = "C4A42372B0476F153FC8C83B"
                BuildableName = "Inkwell.app"
                BlueprintName = "Inkwell"
                ReferencedContainer = "container:Inkwell.xcodeproj">
@@ -44,7 +44,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D84F7E6AF6211683043F3AF6"
+            BlueprintIdentifier = "C4A42372B0476F153FC8C83B"
             BuildableName = "Inkwell.app"
             BlueprintName = "Inkwell"
             ReferencedContainer = "container:Inkwell.xcodeproj">
@@ -61,7 +61,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D84F7E6AF6211683043F3AF6"
+            BlueprintIdentifier = "C4A42372B0476F153FC8C83B"
             BuildableName = "Inkwell.app"
             BlueprintName = "Inkwell"
             ReferencedContainer = "container:Inkwell.xcodeproj">

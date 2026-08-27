@@ -1,9 +1,9 @@
 import Foundation
 
-/// Which Claude model the AI assistant should call. Sonnet is the default —
-/// fast and inexpensive for summaries and Q&A over a page or two of notes;
-/// Opus is offered for people who want the strongest reasoning on long,
-/// dense notebooks.
+/// Which Claude model to call. Sonnet is the default — fast and inexpensive
+/// for summaries, briefings, and Q&A over a page or two of notes. Opus is
+/// offered for harder reasoning over long documents, Haiku for when you want
+/// the cheapest possible pass.
 enum ClaudeModel: String, CaseIterable, Identifiable {
     case sonnet = "claude-sonnet-5"
     case opus = "claude-opus-5"
@@ -16,6 +16,14 @@ enum ClaudeModel: String, CaseIterable, Identifiable {
         case .sonnet: return "Claude Sonnet"
         case .opus: return "Claude Opus"
         case .haiku: return "Claude Haiku"
+        }
+    }
+
+    var blurb: String {
+        switch self {
+        case .sonnet: return "Balanced. The right default for daily use."
+        case .opus: return "Strongest reasoning. Best for long documents and planning."
+        case .haiku: return "Fastest and cheapest. Good for short summaries."
         }
     }
 }
@@ -37,36 +45,41 @@ enum ClaudeAPIError: LocalizedError {
     }
 }
 
-/// Thin client for Anthropic's Messages API. This is intentionally optional
-/// and off by default: nothing about the note-taking experience depends on
-/// it, and no note content is sent anywhere unless the user explicitly asks
-/// the assistant a question and has configured an API key.
+/// One turn in a conversation, in the shape the Messages API expects.
+struct ClaudeMessage: Codable, Equatable {
+    let role: String
+    let content: String
+
+    static func user(_ text: String) -> ClaudeMessage { ClaudeMessage(role: "user", content: text) }
+    static func assistant(_ text: String) -> ClaudeMessage { ClaudeMessage(role: "assistant", content: text) }
+}
+
+/// Thin client for Anthropic's Messages API.
+///
+/// Everything that reaches this class is opt-in: the note-taking, task, and
+/// document features all work with no API key at all, and nothing is sent
+/// anywhere until the user asks a question or generates a briefing. The key
+/// lives in the Keychain and goes straight to `api.anthropic.com`.
 struct ClaudeAPIService {
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
     private let apiVersion = "2023-06-01"
 
-    func ask(
-        prompt: String,
-        noteContext: String,
+    /// Sends a full conversation and returns the assistant's reply text.
+    func send(
+        messages: [ClaudeMessage],
+        system: String,
         model: ClaudeModel,
+        maxTokens: Int = 2048,
         apiKey: String
     ) async throws -> String {
         guard !apiKey.isEmpty else { throw ClaudeAPIError.missingAPIKey }
-
-        let systemPrompt = """
-        You are a study assistant embedded in a handwriting note-taking app. \
-        You are given the recognized text and typed text from the user's current \
-        note page, followed by a question or instruction from the user. Answer \
-        concisely and reference the notes directly when useful.
-        """
-
-        let userContent = "Notes from the current page:\n\n\(noteContext)\n\n---\n\nRequest: \(prompt)"
+        guard !messages.isEmpty else { throw ClaudeAPIError.badResponse("Nothing to send.") }
 
         let body = MessagesRequest(
             model: model.rawValue,
-            max_tokens: 1024,
-            system: systemPrompt,
-            messages: [.init(role: "user", content: userContent)]
+            max_tokens: maxTokens,
+            system: system,
+            messages: messages.map { .init(role: $0.role, content: $0.content) }
         )
 
         var request = URLRequest(url: endpoint)
@@ -74,6 +87,7 @@ struct ClaudeAPIService {
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue(apiVersion, forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 120
         request.httpBody = try JSONEncoder().encode(body)
 
         let data: Data
@@ -94,7 +108,42 @@ struct ClaudeAPIService {
         }
 
         let decoded = try JSONDecoder().decode(MessagesResponse.self, from: data)
-        return decoded.content.map(\.text).joined(separator: "\n")
+        let text = decoded.content
+            .filter { $0.type == "text" }
+            .compactMap(\.text)
+            .joined(separator: "\n")
+
+        guard !text.isEmpty else {
+            throw ClaudeAPIError.badResponse("Claude returned an empty response.")
+        }
+        return text
+    }
+
+    /// Single-shot convenience used by the note-page assistant: one question
+    /// asked against one page of recognized text.
+    func ask(
+        prompt: String,
+        noteContext: String,
+        model: ClaudeModel,
+        apiKey: String
+    ) async throws -> String {
+        let systemPrompt = """
+        You are a study assistant embedded in a handwriting note-taking app. \
+        You are given the recognized text and typed text from the user's current \
+        note page, followed by a question or instruction from the user. Answer \
+        concisely and reference the notes directly when useful. If the recognized \
+        text looks garbled, say so rather than guessing at what it meant.
+        """
+
+        let userContent = "Notes from the current page:\n\n\(noteContext)\n\n---\n\nRequest: \(prompt)"
+
+        return try await send(
+            messages: [.user(userContent)],
+            system: systemPrompt,
+            model: model,
+            maxTokens: 1024,
+            apiKey: apiKey
+        )
     }
 }
 
@@ -112,7 +161,9 @@ private struct MessagesRequest: Encodable {
 private struct MessagesResponse: Decodable {
     struct ContentBlock: Decodable {
         let type: String
-        let text: String
+        /// Optional so a non-text block (should the API ever return one)
+        /// doesn't fail the whole decode.
+        let text: String?
     }
     let content: [ContentBlock]
 }

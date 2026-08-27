@@ -11,6 +11,8 @@ struct PageEditorView: View {
     @Bindable var notebook: Notebook
     @Environment(\.modelContext) private var modelContext
 
+    @AppStorage("pencilOnlyByDefault") private var pencilOnlyByDefault = false
+
     @State private var currentPageID: PersistentIdentifier?
     @State private var drawing = PKDrawing()
     @State private var mode: EditorMode = .draw
@@ -149,6 +151,7 @@ struct PageEditorView: View {
             AIAssistantSheet(page: currentPage)
         }
         .onAppear {
+            pencilOnly = pencilOnlyByDefault
             if currentPageID == nil {
                 currentPageID = sortedPages.first?.persistentModelID
             }

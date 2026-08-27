@@ -69,8 +69,14 @@ struct NotebookGridView: View {
             }
         }
         .sheet(isPresented: $isCreatingNotebook) {
-            NewNotebookSheet(folder: folder) { title, template, color in
-                let notebook = Notebook(title: title, template: template, coverColorName: color.rawValue, folder: folder)
+            NewNotebookSheet(folder: folder) { title, template, color, area in
+                let notebook = Notebook(
+                    title: title,
+                    template: template,
+                    coverColorName: color.rawValue,
+                    area: area,
+                    folder: folder
+                )
                 modelContext.insert(notebook)
                 let firstPage = Page(index: 0, template: template, notebook: notebook)
                 modelContext.insert(firstPage)
@@ -101,28 +107,45 @@ struct NotebookCoverView: View {
                 }
                 .shadow(radius: 3, y: 2)
 
-            Text(notebook.title)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(notebook.title)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Label(notebook.area.title, systemImage: notebook.area.symbolName)
+                    .font(.caption2)
+                    .foregroundStyle(notebook.area.color)
+            }
         }
     }
 }
 
 private struct NewNotebookSheet: View {
     let folder: Folder?
-    let onCreate: (String, PageTemplate, ColorPalette) -> Void
+    let onCreate: (String, PageTemplate, ColorPalette, LifeArea) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
     @State private var template: PageTemplate = .linedWide
     @State private var color: ColorPalette = .yellow
+    @State private var area: LifeArea = .school
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Name") {
                     TextField("Notebook title", text: $title)
+                }
+                Section {
+                    Picker("Area", selection: $area) {
+                        ForEach(LifeArea.allCases) { option in
+                            Label(option.title, systemImage: option.symbolName).tag(option)
+                        }
+                    }
+                } header: {
+                    Text("Area")
+                } footer: {
+                    Text("Tagging a notebook lets the assistant know which part of your life it belongs to.")
                 }
                 Section("Cover Color") {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
@@ -152,7 +175,7 @@ private struct NewNotebookSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
                         let name = title.trimmingCharacters(in: .whitespaces)
-                        onCreate(name.isEmpty ? "Untitled" : name, template, color)
+                        onCreate(name.isEmpty ? "Untitled" : name, template, color, area)
                         dismiss()
                     }
                 }

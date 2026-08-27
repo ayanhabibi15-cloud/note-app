@@ -1,33 +1,54 @@
 import SwiftUI
 import SwiftData
 
-struct SidebarView: View {
+/// The one sidebar for the whole app: the daily views on top, the notebook
+/// folder tree below. Keeping folders in the same list as Today and Tasks is
+/// what makes this feel like one workspace — you can drop from "what's due"
+/// straight into the notebook for that class without changing apps.
+struct AppSidebar: View {
     @Query(filter: #Predicate<Folder> { $0.parent == nil }, sort: \Folder.sortOrder)
     private var rootFolders: [Folder]
 
+    // Written as `== false` rather than `!`: SwiftData's predicate builder
+    // handles the explicit comparison more reliably than the negation operator.
+    @Query(filter: #Predicate<TaskItem> { $0.isDone == false })
+    private var openTasks: [TaskItem]
+
     @Environment(\.modelContext) private var modelContext
 
-    @Binding var selectedFolder: Folder?
-    @Binding var showAllNotebooks: Bool
-    @State private var showSettings = false
+    @Binding var selection: AppSection?
+    @Binding var showSettings: Bool
+
     @State private var isAddingFolder = false
     @State private var newFolderName = ""
 
+    private var dueTodayCount: Int {
+        openTasks.filter { $0.isDueToday || $0.isOverdue }.count
+    }
+
     var body: some View {
-        List {
+        List(selection: $selection) {
             Section {
-                Button {
-                    selectedFolder = nil
-                    showAllNotebooks = true
-                } label: {
-                    Label("All Notebooks", systemImage: "square.grid.2x2")
-                }
-                .buttonStyle(.plain)
+                Label("Today", systemImage: "sun.horizon.fill")
+                    .tag(AppSection.today)
+
+                Label("Tasks", systemImage: "checklist")
+                    .badge(dueTodayCount)
+                    .tag(AppSection.tasks)
+
+                Label("Documents", systemImage: "folder.fill.badge.person.crop")
+                    .tag(AppSection.documents)
+
+                Label("Assistant", systemImage: "sparkles")
+                    .tag(AppSection.assistant)
             }
 
-            Section("Folders") {
+            Section("Notes") {
+                Label("All Notebooks", systemImage: "square.grid.2x2")
+                    .tag(AppSection.allNotebooks)
+
                 ForEach(rootFolders) { folder in
-                    FolderRow(folder: folder, selectedFolder: $selectedFolder, showAllNotebooks: $showAllNotebooks)
+                    FolderRow(folder: folder)
                 }
                 .onDelete { indexSet in
                     for index in indexSet { modelContext.delete(rootFolders[index]) }
@@ -55,55 +76,41 @@ struct SidebarView: View {
             TextField("Folder name", text: $newFolderName)
             Button("Cancel", role: .cancel) { newFolderName = "" }
             Button("Create") {
-                guard !newFolderName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                let folder = Folder(name: newFolderName, sortOrder: rootFolders.count)
-                modelContext.insert(folder)
+                let name = newFolderName.trimmingCharacters(in: .whitespaces)
                 newFolderName = ""
+                guard !name.isEmpty else { return }
+                modelContext.insert(Folder(name: name, sortOrder: rootFolders.count))
             }
-        }
-        .sheet(isPresented: $showSettings) {
-            SettingsView()
         }
     }
 }
 
+/// One folder in the tree, recursing into its subfolders. Uses `.tag` so the
+/// row participates in the enclosing `List`'s selection rather than pushing a
+/// separate navigation destination.
 private struct FolderRow: View {
     @Bindable var folder: Folder
-    @Binding var selectedFolder: Folder?
-    @Binding var showAllNotebooks: Bool
     @Environment(\.modelContext) private var modelContext
+
     @State private var isRenaming = false
     @State private var renameText = ""
     @State private var isAddingSubfolder = false
     @State private var newSubfolderName = ""
 
     var body: some View {
-        if folder.subfolders.isEmpty {
-            row
-        } else {
-            DisclosureGroup {
-                ForEach(folder.subfolders) { sub in
-                    FolderRow(folder: sub, selectedFolder: $selectedFolder, showAllNotebooks: $showAllNotebooks)
+        Group {
+            if folder.subfolders.isEmpty {
+                label
+            } else {
+                DisclosureGroup {
+                    ForEach(folder.subfolders) { sub in
+                        FolderRow(folder: sub)
+                    }
+                } label: {
+                    label
                 }
-            } label: {
-                row
             }
         }
-    }
-
-    private var row: some View {
-        Button {
-            selectedFolder = folder
-            showAllNotebooks = false
-        } label: {
-            Label {
-                Text(folder.name)
-            } icon: {
-                Image(systemName: folder.symbolName)
-                    .foregroundStyle(ColorPalette.color(named: folder.colorName))
-            }
-        }
-        .buttonStyle(.plain)
         .contextMenu {
             Button {
                 renameText = folder.name
@@ -119,10 +126,8 @@ private struct FolderRow: View {
             }
             Menu("Color") {
                 ForEach(ColorPalette.allCases) { palette in
-                    Button {
+                    Button(palette.rawValue.capitalized) {
                         folder.colorName = palette.rawValue
-                    } label: {
-                        Label(palette.rawValue.capitalized, systemImage: "circle.fill")
                     }
                 }
             }
@@ -136,18 +141,30 @@ private struct FolderRow: View {
             TextField("Folder name", text: $renameText)
             Button("Cancel", role: .cancel) {}
             Button("Save") {
-                guard !renameText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                folder.name = renameText
+                let name = renameText.trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty else { return }
+                folder.name = name
             }
         }
         .alert("New Subfolder", isPresented: $isAddingSubfolder) {
             TextField("Folder name", text: $newSubfolderName)
             Button("Cancel", role: .cancel) {}
             Button("Create") {
-                guard !newSubfolderName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                let sub = Folder(name: newSubfolderName, parent: folder, sortOrder: folder.subfolders.count)
-                modelContext.insert(sub)
+                let name = newSubfolderName.trimmingCharacters(in: .whitespaces)
+                newSubfolderName = ""
+                guard !name.isEmpty else { return }
+                modelContext.insert(Folder(name: name, parent: folder, sortOrder: folder.subfolders.count))
             }
         }
+    }
+
+    private var label: some View {
+        Label {
+            Text(folder.name)
+        } icon: {
+            Image(systemName: folder.symbolName)
+                .foregroundStyle(ColorPalette.color(named: folder.colorName))
+        }
+        .tag(AppSection.folder(folder.persistentModelID))
     }
 }
