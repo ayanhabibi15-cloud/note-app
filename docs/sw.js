@@ -2,7 +2,7 @@
 // Notes live in IndexedDB, not here — this only caches the app itself so it
 // opens with no connection. Bump CACHE when the app files change.
 
-const CACHE = 'inkwell-v1';
+const CACHE = 'inkwell-v2';
 
 const ASSETS = [
   './',

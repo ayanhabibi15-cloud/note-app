@@ -724,8 +724,45 @@ function canDraw(e) {
   return true;
 }
 
+// Palm rejection. A hand resting on the glass arrives as an ordinary touch
+// pointer. Two things keep it from interfering: a touch can never interrupt
+// a stroke the Pencil is drawing, and in pencil-only mode a *single* touch
+// does nothing at all — panning and zooming take two fingers, the way they
+// do in other note apps. That second rule is what makes this reliable, since
+// contact-size reporting varies between browsers.
+let penActive = false;
+let lastPenAt = 0;
+const PALM_CONTACT = 40; // CSS px; fingertips report well under this
+
+function isPalmSized(e) {
+  return e.width > PALM_CONTACT || e.height > PALM_CONTACT;
+}
+
+function shouldIgnoreTouch(e) {
+  if (e.pointerType !== 'touch') return false;
+  // Never let a touch interrupt a stroke that is being drawn.
+  if (penActive) return true;
+  // A contact patch this big is a hand, not a fingertip.
+  return state.pencilOnly && isPalmSized(e);
+}
+
 el.stage.addEventListener('pointerdown', (e) => {
   if (!state.notebook) return;
+  if (shouldIgnoreTouch(e)) return;
+
+  if (e.pointerType === 'pen') {
+    lastPenAt = Date.now();
+    // The pencil takes over: abandon any pan or pinch a resting hand began.
+    panning = null;
+    if (gesture) {
+      gesture = null;
+      el.stage.style.transform = '';
+    }
+    for (const [id, info] of pointers) {
+      if (info.type === 'touch') pointers.delete(id);
+    }
+  }
+
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
 
   if (e.pointerType === 'pen' && !settings.get('sawPen', false)) {
@@ -736,13 +773,15 @@ el.stage.addEventListener('pointerdown', (e) => {
     }
   }
 
-  if (pointers.size >= 2) {
+  // Two fingers means pinch/pan — but only fingers, and never mid-stroke.
+  if (pointers.size >= 2 && !penActive) {
     cancelStroke();
     startGesture();
     return;
   }
 
   if (canDraw(e)) {
+    if (e.pointerType === 'pen') penActive = true;
     if (state.tool === 'eraser') {
       erased = [];
       eraseAt(pagePoint(e));
@@ -758,7 +797,12 @@ el.stage.addEventListener('pointerdown', (e) => {
       drawLive();
     }
   } else if (e.pointerType !== 'pen') {
-    panning = { x: e.clientX, y: e.clientY, left: el.wrap.scrollLeft, top: el.wrap.scrollTop };
+    // In pencil-only mode a lone touch on the page is most likely the hand
+    // resting there, so it scrolls nothing — two fingers pan instead.
+    const lonePalmRisk = e.pointerType === 'touch' && state.pencilOnly && state.tool !== 'text';
+    if (!lonePalmRisk) {
+      panning = { x: e.clientX, y: e.clientY, left: el.wrap.scrollLeft, top: el.wrap.scrollTop };
+    }
   }
 });
 
@@ -767,6 +811,7 @@ window.addEventListener(
   (e) => {
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
+    if (e.pointerType === 'pen') lastPenAt = Date.now();
 
     if (gesture && pointers.size >= 2) {
       updateGesture();
@@ -797,11 +842,19 @@ window.addEventListener(
 );
 
 function endPointer(e) {
+  if (e.pointerType === 'pen') {
+    penActive = false;
+    lastPenAt = Date.now();
+  }
+  if (!pointers.has(e.pointerId)) return; // a palm we chose to ignore
   pointers.delete(e.pointerId);
 
   if (gesture && pointers.size < 2) commitGesture();
 
-  if (stroke && pointers.size === 0) {
+  // Only the hand is left on the glass — finish the stroke anyway.
+  const onlyTouchesLeft = [...pointers.values()].every((p) => p.type === 'touch');
+
+  if (stroke && (pointers.size === 0 || onlyTouchesLeft)) {
     const finished = stroke;
     stroke = null;
     ctx.live.clearRect(0, 0, PAGE.w, PAGE.h);
@@ -814,7 +867,7 @@ function endPointer(e) {
     }
   }
 
-  if (erased && pointers.size === 0) {
+  if (erased && (pointers.size === 0 || onlyTouchesLeft)) {
     if (erased.length) {
       pushUndo({ type: 'erase', items: erased });
       scheduleSave();
@@ -1449,6 +1502,19 @@ async function boot() {
 // by the time the async boot above gets this far.
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
+
+  // A new version took over. Reload to pick it up, but never mid-page:
+  // interrupting someone while they are writing is worse than waiting.
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return;
+    reloading = true;
+    if (el.editor.hidden) {
+      location.reload();
+    } else {
+      toast('Update ready — it will apply next time you open Inkwell.');
+    }
+  });
 }
 
 boot();

@@ -44,6 +44,16 @@ body {
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  /* A palm resting on the screen otherwise drags out a blue text selection
+     across the whole page. Text you actually type stays selectable below. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input, textarea, select, .answer, [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 h1, h2, h3, h4 { margin: 0; font-weight: 650; letter-spacing: -.01em; }
@@ -109,7 +119,6 @@ button:disabled { opacity: .45; cursor: default; }
 .folder-row {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 8px; border-radius: 9px; cursor: pointer;
-  user-select: none;
 }
 .folder-row:hover { background: var(--chrome-2); }
 .folder-row.selected { background: color-mix(in srgb, var(--accent) 15%, transparent); }

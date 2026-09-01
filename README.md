@@ -24,9 +24,13 @@ today, and it does everything the native version does.
 
 - **Apple Pencil writing** with pressure-sensitive strokes, plus a
   highlighter, an eraser, and a typed-text tool.
-- **Palm rejection** — "Pencil only" mode ignores finger touches while you
-  write. It turns itself on the first time you use a Pencil.
-- **Pinch to zoom, two-finger pan**, or the zoom buttons.
+- **Palm rejection** — rest your hand on the screen while you write. "Pencil
+  only" mode turns itself on the first time you use a Pencil; from then on a
+  touch can never interrupt a stroke, and a single touch on the page does
+  nothing at all.
+- **Two fingers to pan, pinch to zoom** (or the zoom buttons). Panning takes
+  two fingers precisely so that a resting palm can't scroll the page. With
+  "Pencil only" off, one finger draws instead.
 - **Paper templates**: blank, narrow-ruled, college-ruled, small/large grid,
   dotted, Cornell notes, and checklist — per notebook or per page.
 - **Folders that nest as deep as you like**, colour-tagged, with notebooks
