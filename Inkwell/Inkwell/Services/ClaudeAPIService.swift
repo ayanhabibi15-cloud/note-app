@@ -1,21 +1,28 @@
 import Foundation
 
-/// Which Claude model the AI assistant should call. Sonnet is the default —
-/// fast and inexpensive for summaries and Q&A over a page or two of notes;
-/// Opus is offered for people who want the strongest reasoning on long,
-/// dense notebooks.
+/// Which Claude model the AI assistant should call. Opus is the default —
+/// the strongest reasoning on long, dense notebooks; Sonnet and Haiku are
+/// offered for people who want faster, cheaper answers.
 enum ClaudeModel: String, CaseIterable, Identifiable {
-    case sonnet = "claude-sonnet-5"
     case opus = "claude-opus-5"
-    case haiku = "claude-haiku-4-5-20251001"
+    case sonnet = "claude-sonnet-5"
+    case haiku = "claude-haiku-4-5"
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
-        case .sonnet: return "Claude Sonnet"
-        case .opus: return "Claude Opus"
-        case .haiku: return "Claude Haiku"
+        case .opus: return "Claude Opus 5"
+        case .sonnet: return "Claude Sonnet 5"
+        case .haiku: return "Claude Haiku 4.5"
+        }
+    }
+
+    /// Only the current top-tier models accept the effort setting.
+    var supportsEffort: Bool {
+        switch self {
+        case .opus, .sonnet: return true
+        case .haiku: return false
         }
     }
 }
@@ -62,11 +69,14 @@ struct ClaudeAPIService {
 
         let userContent = "Notes from the current page:\n\n\(noteContext)\n\n---\n\nRequest: \(prompt)"
 
+        // Thinking is on by default on the current models and draws from the
+        // same budget as the answer, so leave plenty of headroom here.
         let body = MessagesRequest(
             model: model.rawValue,
-            max_tokens: 1024,
+            max_tokens: 16000,
             system: systemPrompt,
-            messages: [.init(role: "user", content: userContent)]
+            messages: [.init(role: "user", content: userContent)],
+            output_config: model.supportsEffort ? .init(effort: "medium") : nil
         )
 
         var request = URLRequest(url: endpoint)
@@ -94,7 +104,21 @@ struct ClaudeAPIService {
         }
 
         let decoded = try JSONDecoder().decode(MessagesResponse.self, from: data)
-        return decoded.content.map(\.text).joined(separator: "\n")
+
+        if decoded.stop_reason == "refusal" {
+            throw ClaudeAPIError.badResponse("Claude declined to answer this one.")
+        }
+
+        let answer = decoded.content
+            .filter { $0.type == "text" }
+            .compactMap(\.text)
+            .joined(separator: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !answer.isEmpty else {
+            throw ClaudeAPIError.badResponse("No answer came back — try rephrasing the question.")
+        }
+        return answer
     }
 }
 
@@ -103,18 +127,25 @@ private struct MessagesRequest: Encodable {
         let role: String
         let content: String
     }
+    struct OutputConfig: Encodable {
+        let effort: String
+    }
     let model: String
     let max_tokens: Int
     let system: String
     let messages: [Message]
+    let output_config: OutputConfig?
 }
 
 private struct MessagesResponse: Decodable {
+    /// Responses also carry thinking blocks, which have no `text`, so this
+    /// stays optional and callers filter on `type`.
     struct ContentBlock: Decodable {
         let type: String
-        let text: String
+        let text: String?
     }
     let content: [ContentBlock]
+    let stop_reason: String?
 }
 
 private struct ErrorEnvelope: Decodable {

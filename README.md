@@ -1,76 +1,116 @@
 # Inkwell
 
-A Notability-inspired, handwriting-first note-taking app built with SwiftUI
-and PencilKit. It targets iPhone, iPad, and Mac (via Mac Catalyst) from a
-single Xcode project.
+A Notability-inspired, handwriting-first note-taking app — folders, paper
+templates, Apple Pencil input, and an optional Claude assistant.
 
-## Features
+It comes in two forms:
 
-- **Apple Pencil note-taking** — a `PKCanvasView`-backed canvas with Apple's
-  native tool picker (pen, highlighter, pencil, eraser, lasso, ruler, color
-  picker), pinch-to-zoom, and an optional "Apple Pencil only" mode for palm
-  rejection.
-- **Paper templates** — blank, narrow/college-ruled lined, small/large grid,
-  dotted, Cornell notes, and checklist layouts, chosen per notebook or
-  overridden per page.
-- **Folders, your way** — nest folders as deep as you like, color- and
-  icon-tag them, and organize notebooks however suits you (by class, by
-  project, by year).
-- **Typed text tool** — an independent, movable/resizable text layer on each
-  page, so typed and handwritten notes can coexist (Notability calls this
-  the "type tool").
-- **Page management** — add, delete, and page through a notebook via a
-  thumbnail strip; export any page as an image via the share sheet.
-- **Optional Claude AI assistant** — recognizes a page's handwriting
-  on-device with Vision (no network call for OCR), then lets you ask
-  Claude Sonnet or Claude Opus a question about the page (e.g.
-  "summarize this" or "quiz me on this"). Fully opt-in: nothing is sent
-  anywhere until you add your own Anthropic API key in Settings.
+| | [`docs/`](docs) — **web app** | [`Inkwell/`](Inkwell) — **native iOS app** |
+|---|---|---|
+| Runs on | iPad, iPhone, Mac, any modern browser | iPhone, iPad, Mac (Catalyst) |
+| Needs | nothing — open a URL | a Mac with Xcode |
+| Costs | free | $99/yr to keep it installed past 7 days |
+| Install | Safari → Share → Add to Home Screen | build and run from Xcode |
+| Built with | vanilla JS, Canvas, IndexedDB | SwiftUI, PencilKit, SwiftData |
 
-## Project layout
+**Start with the web app.** It's the one you can actually put on your iPad
+today, and it does everything the native version does.
+
+---
+
+## The web app
+
+### Features
+
+- **Apple Pencil writing** with pressure-sensitive strokes, plus a
+  highlighter, an eraser, and a typed-text tool.
+- **Palm rejection** — "Pencil only" mode ignores finger touches while you
+  write. It turns itself on the first time you use a Pencil.
+- **Pinch to zoom, two-finger pan**, or the zoom buttons.
+- **Paper templates**: blank, narrow-ruled, college-ruled, small/large grid,
+  dotted, Cornell notes, and checklist — per notebook or per page.
+- **Folders that nest as deep as you like**, colour-tagged, with notebooks
+  inside them.
+- **Multi-page notebooks** with a thumbnail strip, plus PNG export of any page.
+- **Ask Claude about a page** — sends an image of the page, so it reads your
+  actual handwriting. Optional and off until you add your own API key.
+- **Works offline** once loaded, and everything is stored on your device.
+- **Backup export/import** so your notes are never trapped in a browser.
+
+### Putting it on your iPad's home screen
+
+1. **Turn on GitHub Pages** (one time). In this repo on github.com:
+   **Settings → Pages →** under "Build and deployment", set Source to
+   *Deploy from a branch*, pick the branch this code is on, choose the
+   **`/docs`** folder, and press **Save**. Wait a minute or two.
+2. GitHub will show you a URL like
+   `https://<your-username>.github.io/note-app/`. Open it in **Safari on your
+   iPad**.
+3. Tap the **Share** button (the square with the arrow), scroll down, and tap
+   **Add to Home Screen**, then **Add**.
+4. Open Inkwell from the home screen. It now runs full screen with no browser
+   bars, and works without a connection.
+
+### Turning on the Claude assistant
+
+1. Get an API key from the Anthropic Console (this is a paid API, separate
+   from a Claude.ai subscription).
+2. In Inkwell, tap the **gear** in the sidebar, paste the key, pick a default
+   model, and tap Done.
+3. On any page, tap **✦ Ask Claude**, choose a prompt or write your own, and
+   tap Ask.
+
+A caveat worth understanding: this is a website with no server, so the key is
+stored in your browser and sent straight to Anthropic from your device.
+Anyone who can unlock your iPad can read it — fine for a personal device,
+not something to do on a shared one.
+
+### Your notes and where they live
+
+Notes are saved in the browser's IndexedDB on the device you wrote them on —
+they don't sync between devices, and clearing Safari's website data would
+remove them. Use **Settings → Export backup** now and then; the file it saves
+can be restored with **Import backup**, including on another device.
+
+### Running it locally
 
 ```
-Inkwell.xcodeproj/        Xcode project (open this in Xcode)
-Inkwell/
-  InkwellApp.swift        App entry point, SwiftData model container
-  ContentView.swift        Top-level NavigationSplitView
-  Models/                  SwiftData models (Folder, Notebook, Page, TextBox, PageTemplate)
-  Views/                   SwiftUI screens (sidebar, notebook grid, page editor, canvas, AI sheet, settings)
-  Services/                Keychain, Claude API client, on-device handwriting recognition
-  Support/                 Color palette helpers
-  Assets.xcassets/         App icon + accent color placeholders
+cd docs && python3 -m http.server 8000
 ```
 
-## Getting started
+Then open `http://localhost:8000`. (It needs to be served over http, not
+opened as a file, because it uses JavaScript modules and a service worker.)
 
-1. Open `Inkwell.xcodeproj` in Xcode 16 or later.
-2. Select the **Inkwell** scheme and choose an iPhone or iPad simulator (or
-   "My Mac (Mac Catalyst)") as the run destination.
-3. In **Signing & Capabilities**, set your own Team so Xcode can code-sign
-   the app for a device or Catalyst build. The bundle identifier is
-   `com.inkwell.notesapp` — change it if you want your own.
-4. Build and run. The app starts with an empty folder list — tap **+** to
-   create your first folder, then create a notebook inside it.
-5. To use the Apple Pencil, run on a real iPad; the simulator only supports
-   mouse/trackpad input for PencilKit.
+---
 
-### Enabling the Claude AI assistant
+## The native iOS app
 
-1. Get an API key from the Anthropic Console.
-2. In the app, open **Settings** (gear icon in the sidebar toolbar), paste
-   your key, and pick a default model (Sonnet is the fast/cheap default;
-   Opus is available for harder reasoning).
-3. On any page, tap **Ask AI** in the toolbar. The app recognizes your
-   handwriting with on-device Vision OCR, shows you what it read, and lets
-   you ask a question about it.
+A SwiftUI + PencilKit version of the same idea, with SwiftData persistence and
+on-device Vision handwriting recognition feeding the Claude assistant.
 
-The API key is stored only in the device's Keychain and is sent directly
-to `api.anthropic.com` — never anywhere else.
+1. Open `Inkwell/Inkwell.xcodeproj` in Xcode 16 or later.
+2. Select the **Inkwell** scheme and an iPad simulator, or "My Mac (Mac
+   Catalyst)".
+3. In **Signing & Capabilities**, choose your own Team. The bundle identifier
+   is `com.inkwell.notesapp` — change it to something of your own.
+4. Build and run. For real Apple Pencil input, run on a physical iPad.
 
-### Notes on syncing across devices
+To keep it installed on a device for more than 7 days you need a paid Apple
+Developer account; with a free Apple ID you re-run it from Xcode each week.
 
-This first version stores notes locally per device via SwiftData. To sync
-across your iPhone, iPad, and Mac, the natural next step is switching the
-`modelContainer` in `InkwellApp.swift` to a CloudKit-backed configuration
-and enabling the iCloud capability (with your own Team/container) in
-Signing & Capabilities.
+### Layout
+
+```
+Inkwell/Inkwell/
+  InkwellApp.swift     app entry, SwiftData container
+  ContentView.swift    NavigationSplitView shell
+  Models/              Folder, Notebook, Page, TextBox, PageTemplate
+  Views/               sidebar, notebook grid, page editor, canvas, AI sheet
+  Services/            Keychain, Claude client, handwriting recognition
+```
+
+### Syncing across devices
+
+The native app stores notes locally per device. To sync, switch the
+`modelContainer` in `InkwellApp.swift` to a CloudKit-backed configuration and
+enable the iCloud capability with your own container.

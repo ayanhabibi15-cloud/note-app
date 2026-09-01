@@ -8,7 +8,7 @@ import PencilKit
 struct AIAssistantSheet: View {
     let page: Page?
 
-    @AppStorage("claudeModel") private var modelRawValue = ClaudeModel.sonnet.rawValue
+    @AppStorage("claudeModel") private var modelRawValue = ClaudeModel.opus.rawValue
     @Environment(\.dismiss) private var dismiss
 
     @State private var question = ""
@@ -18,7 +18,7 @@ struct AIAssistantSheet: View {
     @State private var answer = ""
     @State private var errorMessage: String?
 
-    private var model: ClaudeModel { ClaudeModel(rawValue: modelRawValue) ?? .sonnet }
+    private var model: ClaudeModel { ClaudeModel(rawValue: modelRawValue) ?? .opus }
     private var apiKey: String? { KeychainHelper.read() }
 
     var body: some View {

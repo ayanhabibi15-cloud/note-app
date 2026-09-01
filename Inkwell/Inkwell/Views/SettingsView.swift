@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("claudeModel") private var modelRawValue = ClaudeModel.sonnet.rawValue
+    @AppStorage("claudeModel") private var modelRawValue = ClaudeModel.opus.rawValue
 
     @State private var apiKey: String = KeychainHelper.read() ?? ""
     @State private var savedConfirmation = false

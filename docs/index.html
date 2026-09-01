@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Inkwell</title>
+<meta name="description" content="Handwriting-first notebooks with folders, paper templates and an optional Claude assistant.">
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inkwell">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ───────────────────────────── Library ───────────────────────────── -->
+<section id="library" class="screen">
+  <aside id="sidebar">
+    <header class="sidebar-head">
+      <h1>Inkwell</h1>
+      <button id="btn-settings" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
+    </header>
+
+    <nav id="folder-list" aria-label="Folders"></nav>
+
+    <footer class="sidebar-foot">
+      <button id="btn-new-folder" class="ghost-btn">＋ New folder</button>
+    </footer>
+  </aside>
+
+  <main id="library-main">
+    <header class="lib-head">
+      <button id="btn-toggle-sidebar" class="icon-btn narrow-only" aria-label="Folders">☰</button>
+      <h2 id="lib-title">All notebooks</h2>
+      <button id="btn-new-notebook" class="primary-btn">＋ Notebook</button>
+    </header>
+    <div id="notebook-grid"></div>
+    <p id="lib-empty" class="empty-note" hidden>No notebooks here yet. Tap <b>＋ Notebook</b> to start one.</p>
+  </main>
+  <div id="sidebar-scrim" hidden></div>
+</section>
+
+<!-- ───────────────────────────── Editor ───────────────────────────── -->
+<section id="editor" class="screen" hidden>
+  <header id="toolbar">
+    <button id="btn-back" class="icon-btn" aria-label="Back to library">‹</button>
+    <span id="editor-title"></span>
+
+    <div class="tool-group" role="group" aria-label="Tools">
+      <button class="tool-btn" data-tool="pen" aria-pressed="true" title="Pen">✒️</button>
+      <button class="tool-btn" data-tool="highlighter" aria-pressed="false" title="Highlighter">🖍️</button>
+      <button class="tool-btn" data-tool="eraser" aria-pressed="false" title="Eraser">🩹</button>
+      <button class="tool-btn" data-tool="text" aria-pressed="false" title="Text">🅰</button>
+    </div>
+
+    <div id="swatches" class="tool-group" role="group" aria-label="Colours"></div>
+
+    <label class="size-wrap" title="Stroke size">
+      <input type="range" id="size-slider" min="1" max="24" step="1" value="3" aria-label="Stroke size">
+    </label>
+
+    <div class="tool-group">
+      <button id="btn-undo" class="icon-btn" title="Undo" aria-label="Undo">↺</button>
+      <button id="btn-redo" class="icon-btn" title="Redo" aria-label="Redo">↻</button>
+    </div>
+
+    <div class="tool-group">
+      <button id="btn-zoom-out" class="icon-btn" title="Zoom out" aria-label="Zoom out">－</button>
+      <button id="btn-zoom-level" class="text-btn" title="Reset zoom">100%</button>
+      <button id="btn-zoom-in" class="icon-btn" title="Zoom in" aria-label="Zoom in">＋</button>
+    </div>
+
+    <button id="btn-pencil-only" class="text-btn" aria-pressed="false" title="Ignore finger touches while drawing">✏️ Pencil only</button>
+    <button id="btn-template" class="text-btn">Paper</button>
+    <button id="btn-ai" class="text-btn accent">✦ Ask Claude</button>
+    <button id="btn-page-menu" class="icon-btn" title="Page actions" aria-label="Page actions">⋯</button>
+  </header>
+
+  <div id="canvas-wrap">
+    <div id="page-stage">
+      <canvas id="bg-canvas"></canvas>
+      <canvas id="ink-canvas"></canvas>
+      <canvas id="live-canvas"></canvas>
+      <div id="text-layer"></div>
+    </div>
+  </div>
+
+  <footer id="pages-strip" aria-label="Pages"></footer>
+</section>
+
+<!-- ───────────────────────────── Dialogs ───────────────────────────── -->
+<dialog id="dlg-notebook">
+  <form method="dialog" class="sheet">
+    <h3>New notebook</h3>
+    <label class="field">
+      <span>Title</span>
+      <input type="text" id="nb-title" placeholder="Biology, Journal, Meetings…" autocomplete="off">
+    </label>
+    <fieldset class="field">
+      <legend>Cover colour</legend>
+      <div id="nb-colors" class="color-row"></div>
+    </fieldset>
+    <fieldset class="field">
+      <legend>Paper</legend>
+      <div id="nb-templates" class="template-grid"></div>
+    </fieldset>
+    <menu>
+      <button value="cancel" class="ghost-btn">Cancel</button>
+      <button value="create" id="nb-create" class="primary-btn">Create</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-template">
+  <form method="dialog" class="sheet">
+    <h3>Paper for this page</h3>
+    <div id="page-templates" class="template-grid"></div>
+    <menu>
+      <button value="cancel" class="ghost-btn">Cancel</button>
+      <button value="apply-all" class="ghost-btn">Apply to whole notebook</button>
+      <button value="apply" class="primary-btn">Apply</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-ai">
+  <form method="dialog" class="sheet wide">
+    <h3>✦ Ask Claude about this page</h3>
+    <p id="ai-nokey" class="hint warn" hidden>Add an Anthropic API key in Settings to use this.</p>
+    <div class="ai-row">
+      <img id="ai-preview" alt="Preview of the current page">
+      <div class="ai-controls">
+        <label class="field">
+          <span>Model</span>
+          <select id="ai-model"></select>
+        </label>
+        <label class="field">
+          <span>Your question</span>
+          <textarea id="ai-question" rows="3" placeholder="Summarise this page&#10;Turn these notes into flashcards&#10;Explain step 3"></textarea>
+        </label>
+        <div class="chips" id="ai-chips"></div>
+      </div>
+    </div>
+    <div id="ai-answer" class="answer" hidden></div>
+    <p id="ai-error" class="hint warn" hidden></p>
+    <menu>
+      <button value="cancel" class="ghost-btn">Close</button>
+      <button type="button" id="ai-ask" class="primary-btn">Ask</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-settings">
+  <form method="dialog" class="sheet">
+    <h3>Settings</h3>
+
+    <label class="field">
+      <span>Anthropic API key</span>
+      <input type="password" id="set-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+    </label>
+    <p class="hint">
+      Stored only in this browser, and sent only to api.anthropic.com when you ask a question.
+      Anyone who can use this device can read it, so don't add a key on a shared iPad.
+    </p>
+
+    <label class="field">
+      <span>Default model</span>
+      <select id="set-model"></select>
+    </label>
+
+    <label class="check">
+      <input type="checkbox" id="set-pencil-only">
+      <span>Pencil only — ignore finger touches while drawing</span>
+    </label>
+
+    <h4>Your notes</h4>
+    <p class="hint" id="set-storage">Notes are saved in this browser.</p>
+    <div class="btn-row">
+      <button type="button" id="btn-export" class="ghost-btn">Export backup</button>
+      <button type="button" id="btn-import" class="ghost-btn">Import backup</button>
+      <button type="button" id="btn-wipe" class="danger-btn">Erase everything</button>
+    </div>
+    <input type="file" id="import-file" accept="application/json" hidden>
+
+    <menu>
+      <button value="save" class="primary-btn">Done</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-prompt">
+  <form method="dialog" class="sheet">
+    <h3 id="prompt-title">Name</h3>
+    <label class="field">
+      <input type="text" id="prompt-input" autocomplete="off">
+    </label>
+    <menu>
+      <button value="cancel" class="ghost-btn">Cancel</button>
+      <button value="ok" class="primary-btn">Save</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-menu">
+  <div class="sheet menu-sheet">
+    <h3 id="menu-title">Actions</h3>
+    <div id="menu-actions" class="menu-actions"></div>
+    <menu><button type="button" id="menu-cancel" class="ghost-btn">Cancel</button></menu>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
