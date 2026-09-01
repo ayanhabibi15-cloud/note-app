@@ -24,6 +24,10 @@ today, and it does everything the native version does.
 
 - **Apple Pencil writing** with pressure-sensitive strokes, plus a
   highlighter, an eraser, and a typed-text tool.
+- **Lasso select** — circle some ink to pick it up, then drag it somewhere
+  else, duplicate it, recolour it, or delete it. This is the handwriting
+  answer to selecting text, and it replaces the browser's own copy/paste
+  selection, which is switched off so a resting palm can't trigger it.
 - **Palm rejection** — rest your hand on the screen while you write. "Pencil
   only" mode turns itself on the first time you use a Pencil; from then on a
   touch can never interrupt a stroke, and a single touch on the page does

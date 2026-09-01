@@ -55,6 +55,7 @@
       <button class="tool-btn" data-tool="pen" aria-pressed="true" title="Pen">✒️</button>
       <button class="tool-btn" data-tool="highlighter" aria-pressed="false" title="Highlighter">🖍️</button>
       <button class="tool-btn" data-tool="eraser" aria-pressed="false" title="Eraser">🩹</button>
+      <button class="tool-btn" data-tool="lasso" aria-pressed="false" title="Lasso select — circle some ink">⬚</button>
       <button class="tool-btn" data-tool="text" aria-pressed="false" title="Text">🅰</button>
     </div>
 
@@ -87,6 +88,12 @@
       <canvas id="ink-canvas"></canvas>
       <canvas id="live-canvas"></canvas>
       <div id="text-layer"></div>
+      <div id="sel-bar" hidden>
+        <button type="button" data-act="recolor" title="Recolour to the selected pen colour"><span class="dot"></span> Recolour</button>
+        <button type="button" data-act="duplicate">Duplicate</button>
+        <button type="button" data-act="delete" class="danger">Delete</button>
+        <button type="button" data-act="done">Done</button>
+      </div>
     </div>
   </div>
 

@@ -246,6 +246,23 @@ button:disabled { opacity: .45; cursor: default; }
 #text-layer { position: absolute; inset: 0; transform-origin: 0 0; }
 #text-layer.inactive { pointer-events: none; }
 
+#sel-bar {
+  position: absolute; z-index: 5;
+  display: flex; gap: 2px; padding: 3px;
+  background: var(--chrome); border: 1px solid var(--line);
+  border-radius: 10px; box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+#sel-bar[hidden] { display: none; }
+#sel-bar button {
+  border: none; background: transparent; border-radius: 7px;
+  padding: 6px 9px; font-size: 12.5px; line-height: 1;
+  display: flex; align-items: center; gap: 5px;
+}
+#sel-bar button:hover { background: var(--chrome-2); }
+#sel-bar button.danger { color: var(--danger); }
+#sel-bar .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+
 .text-box { position: absolute; }
 .text-box textarea {
   width: 100%; border: 1px dashed transparent; border-radius: 6px;

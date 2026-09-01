@@ -572,6 +572,7 @@ function layout() {
   el.zoomLabel.textContent = `${Math.round(state.zoom * 100)}%`;
   redraw();
   renderTextBoxes();
+  positionSelBar();
 }
 
 function redraw() {
@@ -579,7 +580,7 @@ function redraw() {
   if (!page) return;
   drawTemplate(ctx.bg, page.template);
   drawStrokes(ctx.ink, page.strokes);
-  ctx.live.clearRect(0, 0, PAGE.w, PAGE.h);
+  drawLive();
 }
 
 function setZoom(next) {
@@ -671,9 +672,31 @@ function applyInverse(entry, forward) {
     if (forward) page.textBoxes = page.textBoxes.filter((b) => b.id !== entry.box.id);
     else page.textBoxes.push(entry.box);
     renderTextBoxes();
+  } else if (entry.type === 'add-many') {
+    if (forward) page.strokes.push(...entry.strokes);
+    else {
+      const ids = new Set(entry.strokes.map((s) => s.id));
+      page.strokes = page.strokes.filter((s) => !ids.has(s.id));
+    }
+  } else if (entry.type === 'move') {
+    const ids = new Set(entry.ids);
+    const sign = forward ? 1 : -1;
+    for (const s of page.strokes) {
+      if (!ids.has(s.id)) continue;
+      for (const p of s.points) {
+        p[0] += entry.dx * sign;
+        p[1] += entry.dy * sign;
+      }
+    }
+  } else if (entry.type === 'recolor') {
+    for (const item of entry.items) {
+      const target = page.strokes.find((s) => s.id === item.id);
+      if (target) target.color = forward ? item.after : item.before;
+    }
   }
 
   redraw();
+  if (selection) refreshSelection();
   scheduleSave();
   refreshCurrentThumb();
 }
@@ -748,6 +771,9 @@ function shouldIgnoreTouch(e) {
 
 el.stage.addEventListener('pointerdown', (e) => {
   if (!state.notebook) return;
+  // Controls that float over the page handle their own taps — without this
+  // the selection is cleared before the button's own click handler runs.
+  if (e.target.closest('#sel-bar, .text-box')) return;
   if (shouldIgnoreTouch(e)) return;
 
   if (e.pointerType === 'pen') {
@@ -782,7 +808,18 @@ el.stage.addEventListener('pointerdown', (e) => {
 
   if (canDraw(e)) {
     if (e.pointerType === 'pen') penActive = true;
-    if (state.tool === 'eraser') {
+    if (state.tool === 'lasso') {
+      const point = pagePoint(e);
+      const b = selection?.bounds;
+      // Grabbing inside an existing selection drags it; anywhere else starts
+      // a fresh loop.
+      if (b && point.x >= b.x - 8 && point.x <= b.x + b.w + 8 && point.y >= b.y - 8 && point.y <= b.y + b.h + 8) {
+        movingSel = { x: point.x, y: point.y, dx: 0, dy: 0 };
+      } else {
+        clearSelection();
+        lassoPath = [[point.x, point.y]];
+      }
+    } else if (state.tool === 'eraser') {
       erased = [];
       eraseAt(pagePoint(e));
     } else {
@@ -815,6 +852,27 @@ window.addEventListener(
 
     if (gesture && pointers.size >= 2) {
       updateGesture();
+      return;
+    }
+
+    if (movingSel) {
+      const point = pagePoint(e);
+      const dx = point.x - movingSel.x - movingSel.dx;
+      const dy = point.y - movingSel.y - movingSel.dy;
+      movingSel.dx += dx;
+      movingSel.dy += dy;
+      translateSelection(dx, dy);
+      selection.bounds.x += dx;
+      selection.bounds.y += dy;
+      drawLive();
+      positionSelBar();
+      return;
+    }
+
+    if (lassoPath) {
+      const point = pagePoint(e);
+      lassoPath.push([point.x, point.y]);
+      drawLive();
       return;
     }
 
@@ -854,6 +912,20 @@ function endPointer(e) {
   // Only the hand is left on the glass — finish the stroke anyway.
   const onlyTouchesLeft = [...pointers.values()].every((p) => p.type === 'touch');
 
+  if (lassoPath && (pointers.size === 0 || onlyTouchesLeft)) {
+    finishLasso();
+  }
+
+  if (movingSel && (pointers.size === 0 || onlyTouchesLeft)) {
+    const { dx, dy } = movingSel;
+    movingSel = null;
+    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+      pushUndo({ type: 'move', ids: [...selection.ids], dx, dy });
+      scheduleSave();
+      refreshCurrentThumb();
+    }
+  }
+
   if (stroke && (pointers.size === 0 || onlyTouchesLeft)) {
     const finished = stroke;
     stroke = null;
@@ -885,13 +957,212 @@ window.addEventListener('pointercancel', endPointer);
 function cancelStroke() {
   if (!stroke) return;
   stroke = null;
-  ctx.live.clearRect(0, 0, PAGE.w, PAGE.h);
+  lassoPath = null;
+  drawLive();
 }
 
 function drawLive() {
   ctx.live.clearRect(0, 0, PAGE.w, PAGE.h);
+  if (lassoPath && lassoPath.length > 1) drawLassoPath();
   if (stroke) drawStroke(ctx.live, stroke);
+  if (selection) drawSelectionOverlay();
 }
+
+/* ── Lasso selection ────────────────────────────────────────────── */
+// The handwriting equivalent of selecting text: circle some ink, then move,
+// duplicate, recolour or delete it.
+
+let lassoPath = null;
+let selection = null; // { ids: Set, bounds: {x, y, w, h} }
+let movingSel = null;
+
+const ACCENT = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3b5bdb';
+
+function drawLassoPath() {
+  const c = ctx.live;
+  c.save();
+  c.setLineDash([7, 6]);
+  c.lineWidth = 1.5;
+  c.strokeStyle = ACCENT;
+  c.beginPath();
+  c.moveTo(lassoPath[0][0], lassoPath[0][1]);
+  for (let i = 1; i < lassoPath.length; i++) c.lineTo(lassoPath[i][0], lassoPath[i][1]);
+  c.closePath();
+  c.stroke();
+  c.restore();
+}
+
+function drawSelectionOverlay() {
+  const { x, y, w, h } = selection.bounds;
+  const c = ctx.live;
+  c.save();
+  c.setLineDash([6, 5]);
+  c.lineWidth = 1.5;
+  c.strokeStyle = ACCENT;
+  c.fillStyle = ACCENT + '14';
+  const pad = 8;
+  if (c.roundRect) {
+    c.beginPath();
+    c.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8);
+    c.fill();
+    c.stroke();
+  } else {
+    c.fillRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+    c.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+  }
+  c.restore();
+}
+
+function pointInPolygon(x, y, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i];
+    const [xj, yj] = poly[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function boundsOf(strokes) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const s of strokes) {
+    for (const [x, y] of s.points) {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (minX === Infinity) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+function selectedStrokes() {
+  if (!selection) return [];
+  return currentPage().strokes.filter((s) => selection.ids.has(s.id));
+}
+
+function finishLasso() {
+  const poly = lassoPath;
+  lassoPath = null;
+  if (!poly || poly.length < 3) {
+    clearSelection();
+    return;
+  }
+
+  // A stroke counts as caught when most of it lies inside the loop.
+  const ids = new Set();
+  for (const s of currentPage().strokes) {
+    const inside = s.points.filter(([x, y]) => pointInPolygon(x, y, poly)).length;
+    if (inside / s.points.length >= 0.6) ids.add(s.id);
+  }
+
+  if (!ids.size) {
+    clearSelection();
+    toast('Nothing caught in the loop — circle a bit wider.');
+    return;
+  }
+
+  selection = { ids, bounds: null };
+  refreshSelection();
+}
+
+function refreshSelection() {
+  if (!selection) return;
+  const strokes = selectedStrokes();
+  if (!strokes.length) {
+    clearSelection();
+    return;
+  }
+  selection.bounds = boundsOf(strokes);
+  drawLive();
+  positionSelBar();
+}
+
+function positionSelBar() {
+  const bar = $('#sel-bar');
+  if (!selection || !selection.bounds) {
+    bar.hidden = true;
+    return;
+  }
+  const { x, y, w } = selection.bounds;
+  bar.hidden = false;
+  bar.querySelector('.dot').style.background = state.color;
+  // Sit above the selection, nudged back inside the page when it would overflow.
+  const barWidth = bar.offsetWidth || 260;
+  const left = clamp((x + w / 2) * state.zoom - barWidth / 2, 4, PAGE.w * state.zoom - barWidth - 4);
+  const top = Math.max(4, y * state.zoom - 46);
+  bar.style.left = `${left}px`;
+  bar.style.top = `${top}px`;
+}
+
+function clearSelection() {
+  selection = null;
+  movingSel = null;
+  $('#sel-bar').hidden = true;
+  drawLive();
+}
+
+function translateSelection(dx, dy) {
+  for (const s of selectedStrokes()) {
+    for (const p of s.points) {
+      p[0] += dx;
+      p[1] += dy;
+    }
+  }
+  drawStrokes(ctx.ink, currentPage().strokes);
+}
+
+$('#sel-bar').addEventListener('click', (e) => {
+  const action = e.target.closest('button')?.dataset.act;
+  if (!action || !selection) return;
+  const page = currentPage();
+
+  if (action === 'done') {
+    clearSelection();
+    return;
+  }
+
+  if (action === 'delete') {
+    const items = [];
+    for (let i = page.strokes.length - 1; i >= 0; i--) {
+      if (selection.ids.has(page.strokes[i].id)) {
+        items.push({ index: i, stroke: page.strokes[i] });
+        page.strokes.splice(i, 1);
+      }
+    }
+    pushUndo({ type: 'erase', items });
+    clearSelection();
+    drawStrokes(ctx.ink, page.strokes);
+  }
+
+  if (action === 'duplicate') {
+    const copies = selectedStrokes().map((s) => ({
+      ...s,
+      id: uid(),
+      points: s.points.map(([x, y, p]) => [x + 18, y + 18, p]),
+    }));
+    page.strokes.push(...copies);
+    pushUndo({ type: 'add-many', strokes: copies });
+    selection = { ids: new Set(copies.map((s) => s.id)), bounds: null };
+    drawStrokes(ctx.ink, page.strokes);
+    refreshSelection();
+  }
+
+  if (action === 'recolor') {
+    const items = selectedStrokes().map((s) => ({ id: s.id, before: s.color, after: state.color }));
+    items.forEach((item) => {
+      const target = page.strokes.find((s) => s.id === item.id);
+      if (target) target.color = item.after;
+    });
+    pushUndo({ type: 'recolor', items });
+    drawStrokes(ctx.ink, page.strokes);
+    drawLive();
+  }
+
+  scheduleSave();
+  refreshCurrentThumb();
+});
 
 function eraseAt(point) {
   const page = currentPage();
@@ -1087,6 +1358,7 @@ async function goToPage(index) {
   if (index === state.pageIndex) return;
   await flushSave();
   state.pageIndex = clamp(index, 0, state.pages.length - 1);
+  clearSelection();
   state.undo = [];
   state.redo = [];
   updateUndoButtons();
@@ -1104,6 +1376,7 @@ async function addPage() {
   state.notebook.pageCount = state.pages.length;
   await db.put('notebooks', state.notebook);
   state.pageIndex = state.pages.length - 1;
+  clearSelection();
   state.undo = [];
   state.redo = [];
   redraw();
@@ -1131,6 +1404,7 @@ async function deleteCurrentPage() {
   await db.put('notebooks', state.notebook);
 
   state.pageIndex = clamp(state.pageIndex, 0, state.pages.length - 1);
+  clearSelection();
   state.undo = [];
   state.redo = [];
   redraw();
@@ -1141,12 +1415,14 @@ async function deleteCurrentPage() {
 /* ── Editor: toolbar wiring ─────────────────────────────────────── */
 
 function setTool(tool) {
+  if (tool !== 'lasso') clearSelection();
   state.tool = tool;
   document.querySelectorAll('.tool-btn').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.tool === tool));
   });
   el.textLayer.classList.toggle('inactive', tool !== 'text');
-  el.sizeSlider.disabled = tool === 'text';
+  el.sizeSlider.disabled = tool === 'text' || tool === 'lasso';
+  if (tool === 'lasso') toast('Circle some ink to select it.');
 }
 
 function setPencilOnly(on) {
@@ -1520,4 +1796,14 @@ if ('serviceWorker' in navigator) {
 boot();
 
 // Exposed purely so the test harness can drive the app.
-window.__inkwell = { state, db, layout, redraw, openNotebook, loadLibrary };
+window.__inkwell = {
+  state,
+  db,
+  layout,
+  redraw,
+  openNotebook,
+  loadLibrary,
+  get selection() {
+    return selection;
+  },
+};
