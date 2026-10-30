@@ -2,174 +2,571 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Focus Stopwatch</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stillness</title>
+<meta name="theme-color" content="#12131a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,200;9..144,400&display=swap" rel="stylesheet">
 <style>
+  /* Palette is set from the time of day by applyTheme(); these are the night defaults. */
   :root {
-    --bg: #14130f;
-    --fg: #e9e4d8;
-    --dim: #6f6a5e;
-    --accent: #c9b99a;
+    --bg: #12131a;
+    --fg: #e3e1da;
+    --dim: #6a6a72;
+    --accent: #b7b2d6;
+    --veil: rgba(18, 19, 26, 0.86);
   }
-  @media (prefers-color-scheme: light) {
-    :root { --bg: #f4f1ea; --fg: #2a2823; --dim: #a29c8d; --accent: #7a6a4f; }
-  }
-  * { box-sizing: border-box; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body {
     background: var(--bg);
     color: var(--fg);
-    font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    font-family: "Fraunces", ui-serif, "Iowan Old Style", Georgia, serif;
     display: grid;
     place-items: center;
     overflow: hidden;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    transition: background-color 3s ease, color 3s ease;
   }
-  main { text-align: center; padding: 0 16px; }
+  /* Paper grain */
+  body::after {
+    content: "";
+    position: fixed; inset: -50%;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.4 -0.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  body.hush { cursor: none; }
 
+  main { text-align: center; padding: 0 16px; width: 100%; }
+
+  /* ---- Time ---- */
   .time {
     font-weight: 200;
     font-size: clamp(3.5rem, 18vw, 11rem);
-    letter-spacing: 0.02em;
-    font-variant-numeric: tabular-nums;
+    font-variation-settings: "opsz" 144;
     line-height: 1;
     cursor: pointer;
-    transition: opacity 0.6s ease, color 0.6s ease;
+    white-space: nowrap;
+    transition: opacity 0.6s ease;
   }
-  .time .sep { color: var(--dim); padding: 0 0.04em; }
-  .time .ms { font-size: 0.35em; color: var(--dim); margin-left: 0.15em; }
-  .paused .time { opacity: 0.45; }
+  .time .d { display: inline-block; width: 0.6em; text-align: center; }
+  .time .sep { display: inline-block; color: var(--dim); width: 0.3em; text-align: center; transform: translateY(-0.06em); }
+  .time .ms { font-size: 0.32em; color: var(--dim); display: inline-block; width: 1.2em; text-align: left; padding-left: 0.1em; }
+  .paused .time { opacity: 0.42; }
 
+  /* ---- Intention ---- */
+  .intent {
+    display: block;
+    margin: 1.8rem auto 0;
+    width: min(32rem, 100%);
+    background: none;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    color: var(--fg);
+    font: inherit;
+    font-size: 1.15rem;
+    font-style: italic;
+    text-align: center;
+    padding: 0.35rem 0;
+    outline: none;
+    transition: color 0.8s ease, border-color 0.4s ease, opacity 0.8s ease;
+  }
+  .intent::placeholder { color: var(--dim); opacity: 1; }
+  .idle .intent:focus { border-bottom-color: color-mix(in srgb, var(--dim) 50%, transparent); }
+  .running .intent, .paused .intent { color: var(--dim); pointer-events: none; }
+  .intent.empty-active { opacity: 0; }
+
+  /* ---- Hint + actions ---- */
   .hint {
-    margin-top: 2.2rem;
-    font-size: 0.8rem;
-    letter-spacing: 0.3em;
+    margin-top: 1.6rem;
+    min-height: 1.2em;
+    font-size: 0.72rem;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
     color: var(--dim);
+    pointer-events: none;
     transition: opacity 0.8s ease;
   }
   .hint kbd { font: inherit; color: var(--accent); }
   .running .hint { opacity: 0; }
-  body.running:hover .hint, body.running:focus-within .hint { opacity: 1; }
+  .running.awake .hint { opacity: 1; }
 
-  .reset {
-    margin-top: 1.4rem;
-    background: none;
-    border: 0;
+  .actions { display: flex; gap: 2rem; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.6s ease; }
+  .actions { margin-top: -1.2em; } /* sits in the hint's slot */
+  .paused .actions { opacity: 1; pointer-events: auto; }
+  .paused .hint { opacity: 0; }
+  .actions kbd { font: inherit; color: var(--accent); }
+
+  button.link {
+    background: none; border: 0; padding: 0.4rem 0;
     color: var(--dim);
-    font: inherit;
-    font-size: 0.8rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
+    font: inherit; font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase;
     cursor: pointer;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.6s ease, color 0.3s ease;
+    transition: color 0.3s ease;
   }
-  .paused .reset { opacity: 1; pointer-events: auto; }
-  .reset:hover, .reset:focus-visible { color: var(--accent); outline: none; }
+  button.link:hover, button.link:focus-visible { color: var(--accent); outline: none; }
+  button.link.on { color: var(--accent); }
+
+  /* ---- Corner tools (idle / paused only) ---- */
+  .tools {
+    position: fixed; top: max(20px, env(safe-area-inset-top)); right: 24px;
+    display: flex; gap: 1.4rem;
+    transition: opacity 0.6s ease;
+  }
+  .running .tools { opacity: 0; pointer-events: none; }
+
+  /* ---- Today line ---- */
+  .today {
+    position: fixed; bottom: max(28px, env(safe-area-inset-bottom)); left: 0; right: 0;
+    text-align: center;
+    transition: opacity 0.6s ease;
+  }
+  .today button { font-size: 0.72rem; }
+  .running .today { opacity: 0; pointer-events: none; }
 
   .dot {
-    position: fixed; bottom: 28px; left: 50%;
+    position: fixed; bottom: max(32px, env(safe-area-inset-bottom)); left: 50%;
     width: 6px; height: 6px; margin-left: -3px;
     border-radius: 50%;
     background: var(--accent);
     opacity: 0;
     transition: opacity 0.6s ease;
   }
-  .running .dot { opacity: 0.8; animation: breathe 4s ease-in-out infinite; }
-  @keyframes breathe { 50% { opacity: 0.2; } }
-  @media (prefers-reduced-motion: reduce) { .running .dot { animation: none; } }
+  .running .dot { opacity: 0.8; animation: breathe 5s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: 0.15; } }
+
+  /* ---- Overlays (end card, log) ---- */
+  .overlay {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    padding: 16px;
+    background: var(--veil);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.7s ease;
+    z-index: 5;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+
+  .card { text-align: center; cursor: pointer; }
+  .card .what { font-style: italic; color: var(--dim); font-size: 1.15rem; }
+  .card .dur { font-weight: 200; font-size: clamp(3rem, 12vw, 6rem); font-variation-settings: "opsz" 144; margin: 0.6rem 0 1rem; }
+  .card .meta { font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); }
+  .card .close { margin-top: 3rem; font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--dim); }
+
+  .log { width: min(30rem, 100%); max-height: 80vh; display: flex; flex-direction: column; }
+  .log h2 { font-weight: 400; font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; margin-bottom: 1.4rem; }
+  .log h2 span:last-child { color: var(--accent); }
+  .log ul { list-style: none; overflow-y: auto; }
+  .log li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.8rem 0; border-top: 1px solid color-mix(in srgb, var(--dim) 25%, transparent); }
+  .log li .name { font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .log li .when { color: var(--dim); font-size: 0.85rem; white-space: nowrap; }
+  .log li .len { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .log .empty { color: var(--dim); font-style: italic; text-align: center; padding: 2rem 0; }
+  .log .foot { margin-top: 1.4rem; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .running .dot { animation: none; }
+    body, .overlay { transition: none; }
+  }
 </style>
 </head>
-<body>
+<body class="idle">
+<nav class="tools" aria-label="Settings">
+  <button class="link" id="soundBtn" type="button" title="Brown noise (S)">sound</button>
+  <button class="link" id="zenBtn" type="button" title="Fullscreen (F)">zen</button>
+  <button class="link" id="logBtn" type="button" title="Session log (L)">log</button>
+</nav>
+
 <main>
-  <div class="time" id="time" role="timer" aria-live="off" tabindex="0">
-    <span id="h"></span><span class="sep" id="hs">:</span><span id="m">00</span><span class="sep">:</span><span id="s">00</span><span class="ms" id="ms">.0</span>
+  <div class="time" id="time" role="timer" aria-live="off">
+    <span id="hg" hidden><span class="d" id="h"></span><span class="sep">:</span></span><span class="d" id="m1">0</span><span class="d" id="m2">0</span><span class="sep">:</span><span class="d" id="s1">0</span><span class="d" id="s2">0</span><span class="ms" id="ms">.0</span>
   </div>
-  <p class="hint"><kbd>space</kbd> to start &nbsp;·&nbsp; <kbd>r</kbd> to reset</p>
-  <button class="reset" id="reset" type="button">reset</button>
+  <input class="intent" id="intent" type="text" maxlength="60" autocomplete="off" spellcheck="false"
+         placeholder="What are you studying?" aria-label="What are you studying?">
+  <p class="hint" id="hint"></p>
+  <div class="actions">
+    <button class="link" id="resumeBtn" type="button"><kbd>space</kbd> resume</button>
+    <button class="link" id="finishBtn" type="button"><kbd>enter</kbd> finish</button>
+    <button class="link" id="discardBtn" type="button"><kbd>r</kbd> discard</button>
+  </div>
 </main>
+
+<div class="today"><button class="link" id="todayBtn" type="button"></button></div>
 <div class="dot"></div>
+
+<div class="overlay" id="cardView" role="dialog" aria-label="Session complete">
+  <div class="card">
+    <p class="what" id="cardWhat"></p>
+    <p class="dur" id="cardDur"></p>
+    <p class="meta" id="cardMeta"></p>
+    <p class="close">press any key</p>
+  </div>
+</div>
+
+<div class="overlay" id="logView" role="dialog" aria-label="Session log">
+  <div class="log">
+    <h2><span>Sessions</span><span id="logStreak"></span></h2>
+    <ul id="logList"></ul>
+    <div class="foot"><button class="link" id="logClose" type="button">close</button></div>
+  </div>
+</div>
 
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const el = { h: $('h'), hs: $('hs'), m: $('m'), s: $('s'), ms: $('ms') };
-  const KEY = 'focus-stopwatch';
+  const body = document.body;
+  const input = $('intent');
+  const KEY_CUR = 'stillness:current';
+  const KEY_LOG = 'stillness:log';
+  const KEY_PREF = 'stillness:prefs';
+  const MIN_SESSION = 60 * 1000; // shorter sessions aren't logged
+
+  const load = (k, fallback) => { try { return JSON.parse(localStorage.getItem(k)) ?? fallback; } catch (e) { return fallback; } };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
   let elapsed = 0;        // ms accumulated while paused
   let startedAt = null;   // performance-clock stamp while running
   let raf = 0;
+  let lastHour = 0;
+  let log = load(KEY_LOG, []);
+  let prefs = load(KEY_PREF, { sound: false });
 
   const now = () => elapsed + (startedAt === null ? 0 : performance.now() - startedAt);
+  const state = () => startedAt !== null ? 'running' : elapsed > 0 ? 'paused' : 'idle';
   const pad = n => String(n).padStart(2, '0');
 
+  // ---------- Formatting ----------
+  function fmtDur(ms) {
+    const mins = Math.floor(ms / 60000);
+    const h = Math.floor(mins / 60), m = mins % 60;
+    if (!h) return mins ? m + 'm' : '<1m';
+    return m ? `${h}h ${m}m` : `${h}h`;
+  }
+  const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+  function fmtWhen(t) {
+    const d = new Date(t), today = new Date(), y = new Date();
+    y.setDate(y.getDate() - 1);
+    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (dayKey(d) === dayKey(today)) return time;
+    if (dayKey(d) === dayKey(y)) return 'Yesterday';
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
+
+  // ---------- Stats ----------
+  const todayTotal = () => log.filter(s => dayKey(s.end) === dayKey(Date.now())).reduce((a, s) => a + s.ms, 0);
+  function streak() {
+    const days = new Set(log.map(s => dayKey(s.end)));
+    const d = new Date();
+    if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1); // today not studied yet: streak still alive
+    let n = 0;
+    while (days.has(dayKey(d))) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+  function renderToday() {
+    const total = todayTotal(), s = streak();
+    const parts = [total ? fmtDur(total) + ' today' : 'nothing yet today'];
+    if (s > 1) parts.push(`day ${s}`);
+    $('todayBtn').textContent = parts.join('  ·  ');
+  }
+
+  // ---------- Time-of-day palette ----------
+  const PALETTES = [
+    // [fromHour, bg, fg, dim, accent]
+    [5,  '#f3eee3', '#2b2822', '#a59d8c', '#8a6f45'],  // morning paper
+    [11, '#ece3d2', '#2d2a24', '#9e917a', '#9a6b3a'],  // afternoon linen
+    [17, '#2a211b', '#efe2cf', '#8c7b68', '#d4a46a'],  // evening amber
+    [21, '#12131a', '#e3e1da', '#6a6a72', '#b7b2d6'],  // night ink
+  ];
+  function applyTheme() {
+    const h = new Date().getHours();
+    const p = PALETTES.slice().reverse().find(p => h >= p[0]) || PALETTES[3];
+    const r = document.documentElement.style;
+    r.setProperty('--bg', p[1]); r.setProperty('--fg', p[2]);
+    r.setProperty('--dim', p[3]); r.setProperty('--accent', p[4]);
+    const [R, G, B] = [1, 3, 5].map(i => parseInt(p[1].substr(i, 2), 16));
+    r.setProperty('--veil', `rgba(${R}, ${G}, ${B}, 0.88)`);
+    document.querySelector('meta[name=theme-color]').content = p[1];
+  }
+
+  // ---------- Render ----------
   function render() {
     const t = now();
     const total = Math.floor(t / 1000);
     const h = Math.floor(total / 3600);
-    el.h.textContent = h ? h : '';
-    el.hs.style.display = h ? '' : 'none';
-    el.m.textContent = pad(Math.floor(total / 60) % 60);
-    el.s.textContent = pad(total % 60);
-    el.ms.textContent = '.' + Math.floor((t % 1000) / 100);
-    document.title = (startedAt !== null ? '● ' : '') + (h ? h + ':' : '') +
-      pad(Math.floor(total / 60) % 60) + ':' + pad(total % 60);
+    const m = pad(Math.floor(total / 60) % 60), s = pad(total % 60);
+    $('hg').hidden = !h;
+    $('h').textContent = h || '';
+    $('m1').textContent = m[0]; $('m2').textContent = m[1];
+    $('s1').textContent = s[0]; $('s2').textContent = s[1];
+    $('ms').textContent = '.' + Math.floor((t % 1000) / 100);
+    const label = (h ? h + ':' : '') + m + ':' + s;
+    document.title = state() === 'idle' ? 'Stillness' : (state() === 'running' ? '● ' : '❙❙ ') + label;
   }
 
-  function loop() { render(); raf = requestAnimationFrame(loop); }
-
-  function setState() {
-    const running = startedAt !== null;
-    const paused = !running && elapsed > 0;
-    document.body.classList.toggle('running', running);
-    document.body.classList.toggle('paused', paused);
-    document.querySelector('.hint').innerHTML = running
-      ? '<kbd>space</kbd> to pause'
-      : paused ? '<kbd>space</kbd> to resume &nbsp;·&nbsp; <kbd>r</kbd> to reset'
-               : '<kbd>space</kbd> to start';
-    try {
-      localStorage.setItem(KEY, JSON.stringify({ elapsed: now(), running, at: Date.now() }));
-    } catch (e) {}
+  function loop() {
+    render();
+    const hr = Math.floor(now() / 3600000);
+    if (hr > lastHour) { lastHour = hr; chime(); }
+    raf = requestAnimationFrame(loop);
   }
 
-  function toggle() {
-    if (startedAt === null) {
-      startedAt = performance.now();
-      loop();
-    } else {
-      elapsed = now();
-      startedAt = null;
-      cancelAnimationFrame(raf);
-      render();
+  const HINTS = {
+    idle: () => '<kbd>enter</kbd> to begin',
+    running: () => '<kbd>space</kbd> pause &nbsp;·&nbsp; <kbd>enter</kbd> finish',
+    paused: () => '',
+  };
+
+  function sync() {
+    const st = state();
+    body.classList.remove('idle', 'running', 'paused');
+    body.classList.add(st);
+    input.readOnly = st !== 'idle';
+    input.tabIndex = st === 'idle' ? 0 : -1;
+    input.classList.toggle('empty-active', st !== 'idle' && !input.value.trim());
+    if (st !== 'idle' && document.activeElement === input) input.blur();
+    $('hint').innerHTML = HINTS[st]();
+    $('soundBtn').classList.toggle('on', prefs.sound);
+    renderToday();
+    render();
+    sound(st === 'running' && prefs.sound);
+    wake(st === 'running');
+    save(KEY_CUR, { elapsed: now(), running: st === 'running', at: Date.now(), intent: input.value });
+  }
+
+  // ---------- Actions ----------
+  function start() {
+    if (startedAt !== null) return;
+    audio(); // must be created inside a user gesture
+    startedAt = performance.now();
+    lastHour = Math.floor(now() / 3600000);
+    cancelAnimationFrame(raf);
+    loop();
+    sync();
+    nudge();
+  }
+  function pause() {
+    if (startedAt === null) return;
+    elapsed = now();
+    startedAt = null;
+    cancelAnimationFrame(raf);
+    sync();
+  }
+  const toggle = () => state() === 'running' ? pause() : start();
+
+  function finish() {
+    if (state() === 'idle') return;
+    const ms = now();
+    const intent = input.value.trim();
+    if (ms >= MIN_SESSION) {
+      log.unshift({ intent, ms: Math.round(ms), end: Date.now() });
+      log = log.slice(0, 500);
+      save(KEY_LOG, log);
     }
-    setState();
+    $('cardWhat').textContent = intent || 'Focus';
+    $('cardDur').textContent = fmtDur(ms);
+    const s = streak();
+    $('cardMeta').textContent = ms < MIN_SESSION
+      ? 'too short to log'
+      : [fmtDur(todayTotal()) + ' today', s > 1 ? `day ${s}` : 'day 1'].join('  ·  ');
+    if (ms >= MIN_SESSION) soft();
+    clear();
+    $('cardView').classList.add('open');
   }
-
-  function reset() {
+  function clear() {
     cancelAnimationFrame(raf);
     elapsed = 0; startedAt = null;
-    render(); setState();
+    input.value = '';
+    sync();
+  }
+  function closeCard() {
+    $('cardView').classList.remove('open');
+    input.focus();
   }
 
-  document.addEventListener('keydown', e => {
-    if (e.code === 'Space') { e.preventDefault(); toggle(); }
-    else if (e.key === 'r' || e.key === 'R') reset();
+  function openLog() {
+    const list = $('logList');
+    list.innerHTML = '';
+    if (!log.length) {
+      list.innerHTML = '<li class="empty">Your sessions will gather here.</li>';
+    }
+    for (const s of log.slice(0, 60)) {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="name"></span><span><span class="when"></span>&nbsp;&nbsp;<span class="len"></span></span>';
+      li.querySelector('.name').textContent = s.intent || 'Focus';
+      li.querySelector('.when').textContent = fmtWhen(s.end);
+      li.querySelector('.len').textContent = fmtDur(s.ms);
+      list.appendChild(li);
+    }
+    const st = streak();
+    $('logStreak').textContent = st ? `${st} day streak` : '';
+    $('logView').classList.add('open');
+  }
+  const closeLog = () => $('logView').classList.remove('open');
+  const logOpen = () => $('logView').classList.contains('open');
+  const cardOpen = () => $('cardView').classList.contains('open');
+
+  function zen() {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    } catch (e) {}
+  }
+  function toggleSound() {
+    audio();
+    prefs.sound = !prefs.sound;
+    save(KEY_PREF, prefs);
+    sync();
+  }
+
+  // ---------- Audio: brown noise + chimes, synthesized ----------
+  let ctx = null, noiseGain = null;
+  function audio() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const len = ctx.sampleRate * 8;
+      const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const d = buf.getChannelData(c);
+        let last = 0;
+        for (let i = 0; i < len; i++) {
+          last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+          d[i] = last * 3.5;
+        }
+        // Fade the loop seam so it doesn't click
+        const f = 2048;
+        for (let i = 0; i < f; i++) { const k = i / f; d[i] *= k; d[len - 1 - i] *= k; }
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = 900;
+      noiseGain = ctx.createGain(); noiseGain.gain.value = 0;
+      src.connect(lp).connect(noiseGain).connect(ctx.destination);
+      src.start();
+    } catch (e) { ctx = null; }
+  }
+  function sound(on) {
+    if (!ctx || !noiseGain) return;
+    const t = ctx.currentTime;
+    noiseGain.gain.cancelScheduledValues(t);
+    noiseGain.gain.setValueAtTime(noiseGain.gain.value, t);
+    noiseGain.gain.linearRampToValueAtTime(on ? 0.32 : 0, t + (on ? 2.5 : 0.8));
+  }
+  function bell(freqs, vol, decay) {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    for (const [f, v] of freqs) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol * v, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+      o.connect(g).connect(ctx.destination);
+      o.start(t); o.stop(t + decay + 0.1);
+    }
+  }
+  const chime = () => bell([[528, 1], [792, 0.5], [1056, 0.2]], 0.09, 3.5);  // each full hour
+  const soft = () => bell([[396, 1], [594, 0.4]], 0.06, 2.5);                // session complete
+
+  // ---------- Keep the screen awake while running ----------
+  let lock = null;
+  async function wake(on) {
+    try {
+      if (on && !lock && 'wakeLock' in navigator) {
+        lock = await navigator.wakeLock.request('screen');
+        lock.addEventListener('release', () => { lock = null; });
+      } else if (!on && lock) {
+        await lock.release(); lock = null;
+      }
+    } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state() === 'running') wake(true);
   });
+
+  // ---------- Hide cursor + hints while running, reveal on movement ----------
+  let hushTimer = 0;
+  function nudge() {
+    body.classList.add('awake');
+    body.classList.remove('hush');
+    clearTimeout(hushTimer);
+    hushTimer = setTimeout(() => {
+      body.classList.remove('awake');
+      if (state() === 'running') body.classList.add('hush');
+    }, 2500);
+  }
+  document.addEventListener('mousemove', nudge);
+
+  // ---------- Input ----------
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (cardOpen()) { e.preventDefault(); closeCard(); return; }
+    if (logOpen()) {
+      if (e.key === 'Escape' || e.key.toLowerCase() === 'l') closeLog();
+      return;
+    }
+    if (e.target === input && !input.readOnly) {
+      if (e.key === 'Enter') { e.preventDefault(); start(); }
+      else if (e.key === 'Escape') input.blur();
+      return;
+    }
+    switch (e.key === ' ' ? 'space' : e.key.toLowerCase()) {
+      case 'space': e.preventDefault(); toggle(); break;
+      case 'enter': e.preventDefault(); finish(); break;
+      case 'r': if (state() === 'paused') clear(); break;
+      case 'f': zen(); break;
+      case 's': toggleSound(); break;
+      case 'l': openLog(); break;
+      default: return;
+    }
+    if (state() === 'running') nudge();
+  });
+  input.addEventListener('input', () => { $('hint').innerHTML = HINTS[state()](); });
   $('time').addEventListener('click', toggle);
-  $('reset').addEventListener('click', reset);
+  $('resumeBtn').addEventListener('click', start);
+  $('finishBtn').addEventListener('click', finish);
+  $('discardBtn').addEventListener('click', clear);
+  $('soundBtn').addEventListener('click', toggleSound);
+  $('zenBtn').addEventListener('click', zen);
+  $('logBtn').addEventListener('click', openLog);
+  $('todayBtn').addEventListener('click', openLog);
+  $('logClose').addEventListener('click', closeLog);
+  $('cardView').addEventListener('click', closeCard);
+  $('logView').addEventListener('click', e => { if (e.target === $('logView')) closeLog(); });
+
+  // ---------- Boot ----------
+  applyTheme();
+  setInterval(() => { applyTheme(); if (state() !== 'running') renderToday(); }, 60 * 1000);
 
   // Restore after a refresh; a running session keeps counting the time it was closed.
-  try {
-    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (saved) {
-      elapsed = saved.elapsed + (saved.running ? Date.now() - saved.at : 0);
-      if (saved.running) { startedAt = performance.now(); loop(); }
+  const cur = load(KEY_CUR, null);
+  if (cur && cur.elapsed > 0) {
+    input.value = cur.intent || '';
+    elapsed = cur.elapsed + (cur.running ? Date.now() - cur.at : 0);
+    if (cur.running) {
+      startedAt = performance.now();
+      lastHour = Math.floor(now() / 3600000);
+      loop();
     }
-  } catch (e) {}
-  render(); setState();
+  }
+  sync();
+  if (state() === 'idle') input.focus();
+
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
 })();
 </script>
 </body>
