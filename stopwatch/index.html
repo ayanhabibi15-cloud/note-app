@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus Stopwatch</title>
+<style>
+  :root {
+    --bg: #14130f;
+    --fg: #e9e4d8;
+    --dim: #6f6a5e;
+    --accent: #c9b99a;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #f4f1ea; --fg: #2a2823; --dim: #a29c8d; --accent: #7a6a4f; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  main { text-align: center; padding: 0 16px; }
+
+  .time {
+    font-weight: 200;
+    font-size: clamp(3.5rem, 18vw, 11rem);
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    cursor: pointer;
+    transition: opacity 0.6s ease, color 0.6s ease;
+  }
+  .time .sep { color: var(--dim); padding: 0 0.04em; }
+  .time .ms { font-size: 0.35em; color: var(--dim); margin-left: 0.15em; }
+  .paused .time { opacity: 0.45; }
+
+  .hint {
+    margin-top: 2.2rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+    transition: opacity 0.8s ease;
+  }
+  .hint kbd { font: inherit; color: var(--accent); }
+  .running .hint { opacity: 0; }
+  body.running:hover .hint, body.running:focus-within .hint { opacity: 1; }
+
+  .reset {
+    margin-top: 1.4rem;
+    background: none;
+    border: 0;
+    color: var(--dim);
+    font: inherit;
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease, color 0.3s ease;
+  }
+  .paused .reset { opacity: 1; pointer-events: auto; }
+  .reset:hover, .reset:focus-visible { color: var(--accent); outline: none; }
+
+  .dot {
+    position: fixed; bottom: 28px; left: 50%;
+    width: 6px; height: 6px; margin-left: -3px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .running .dot { opacity: 0.8; animation: breathe 4s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: 0.2; } }
+  @media (prefers-reduced-motion: reduce) { .running .dot { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="time" id="time" role="timer" aria-live="off" tabindex="0">
+    <span id="h"></span><span class="sep" id="hs">:</span><span id="m">00</span><span class="sep">:</span><span id="s">00</span><span class="ms" id="ms">.0</span>
+  </div>
+  <p class="hint"><kbd>space</kbd> to start &nbsp;·&nbsp; <kbd>r</kbd> to reset</p>
+  <button class="reset" id="reset" type="button">reset</button>
+</main>
+<div class="dot"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const el = { h: $('h'), hs: $('hs'), m: $('m'), s: $('s'), ms: $('ms') };
+  const KEY = 'focus-stopwatch';
+
+  let elapsed = 0;        // ms accumulated while paused
+  let startedAt = null;   // performance-clock stamp while running
+  let raf = 0;
+
+  const now = () => elapsed + (startedAt === null ? 0 : performance.now() - startedAt);
+  const pad = n => String(n).padStart(2, '0');
+
+  function render() {
+    const t = now();
+    const total = Math.floor(t / 1000);
+    const h = Math.floor(total / 3600);
+    el.h.textContent = h ? h : '';
+    el.hs.style.display = h ? '' : 'none';
+    el.m.textContent = pad(Math.floor(total / 60) % 60);
+    el.s.textContent = pad(total % 60);
+    el.ms.textContent = '.' + Math.floor((t % 1000) / 100);
+    document.title = (startedAt !== null ? '● ' : '') + (h ? h + ':' : '') +
+      pad(Math.floor(total / 60) % 60) + ':' + pad(total % 60);
+  }
+
+  function loop() { render(); raf = requestAnimationFrame(loop); }
+
+  function setState() {
+    const running = startedAt !== null;
+    const paused = !running && elapsed > 0;
+    document.body.classList.toggle('running', running);
+    document.body.classList.toggle('paused', paused);
+    document.querySelector('.hint').innerHTML = running
+      ? '<kbd>space</kbd> to pause'
+      : paused ? '<kbd>space</kbd> to resume &nbsp;·&nbsp; <kbd>r</kbd> to reset'
+               : '<kbd>space</kbd> to start';
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ elapsed: now(), running, at: Date.now() }));
+    } catch (e) {}
+  }
+
+  function toggle() {
+    if (startedAt === null) {
+      startedAt = performance.now();
+      loop();
+    } else {
+      elapsed = now();
+      startedAt = null;
+      cancelAnimationFrame(raf);
+      render();
+    }
+    setState();
+  }
+
+  function reset() {
+    cancelAnimationFrame(raf);
+    elapsed = 0; startedAt = null;
+    render(); setState();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); toggle(); }
+    else if (e.key === 'r' || e.key === 'R') reset();
+  });
+  $('time').addEventListener('click', toggle);
+  $('reset').addEventListener('click', reset);
+
+  // Restore after a refresh; a running session keeps counting the time it was closed.
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) {
+      elapsed = saved.elapsed + (saved.running ? Date.now() - saved.at : 0);
+      if (saved.running) { startedAt = performance.now(); loop(); }
+    }
+  } catch (e) {}
+  render(); setState();
+})();
+</script>
+</body>
+</html>
